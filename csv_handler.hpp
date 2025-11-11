@@ -13,6 +13,7 @@ struct Waypoint
     std::string name;
     std::string type;
     std::string frequency_khz;
+    std::string frequency_khz_DME;
     std::string country;
     float longitude;
     float latitude;
@@ -80,7 +81,16 @@ private:
         result.push_back(cell);
         return result;
     }
+    static float safe_stof(const std::string& s, float default_value = 0.0f) {
+    if (s.empty()) return default_value;
+    try {
+        return std::stof(s);
+    } catch (...) {
+        return default_value;
+    }
+}
 public:
+    // static std::map<std::string,std::string> load_airport_frequencies() {}
     static std::vector<Airport> load_airports(std::string filename)
     {
         std::vector<Airport> airports;
@@ -96,27 +106,56 @@ public:
         while (std::getline(file, line)) {
             auto row = parse_csv_line(line);
             // Convert row to Airport
-            if (row.size() >= 6) { // check enough columns
-                Airport a;
-                a.ident = row[1];
-                a.type = row[2];
-                a.name = row[3];
-                a.latitude = stof(row[4]);
-                a.longitude = stof(row[5]);
-                if (!row[6].empty()) 
-                {
-                    a.elevation = std::stoi(row[6]);
-                } else {a.elevation = 0;}
-                a.country = row[8];
-                a.municipality = row[10];
-                a.icao = row[12];
-                a.iata = row[13];
 
-                airports.push_back(a);
-            }
+            Airport a;
+            a.ident = row[1];
+            a.type = row[2];
+            a.name = row[3];
+            a.latitude = stof(row[4]);
+            a.longitude = stof(row[5]);
+            if (!row[6].empty()) 
+            {
+                a.elevation = std::stoi(row[6]);
+            } else {a.elevation = 0;}
+            a.country = row[8];
+            a.municipality = row[10];
+            a.icao = row[12];
+            a.iata = row[13];
+
+            airports.push_back(a);
+            
         }
 
         return airports;
+    }
+    static std::vector<Waypoint> load_waypoints(std::string filename)
+    {
+        std::vector<Waypoint> waypoints;
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Error opening file: " << filename << "\n";
+            return waypoints;
+        }      
+        std::string line;
+        std::getline(file, line);
+
+        while (std::getline(file, line)) {
+            auto row = parse_csv_line(line);
+            Waypoint w;
+
+            w.ident = row[2];
+            w.name = row[3];
+            w.type = row[4];
+            w.frequency_khz = row[5];
+            w.latitude = safe_stof(row[6]);
+            w.longitude = safe_stof(row[7]);
+            w.country = row[9];
+            w.frequency_khz_DME = row[10];
+            w.magnetic_variation = safe_stof(row[16]);
+
+            
+        }
+        return waypoints;
     }
     
 };
