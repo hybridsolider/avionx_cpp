@@ -1,12 +1,16 @@
-#include "csv_handler.hpp"
+#include "flight_math.hpp"
+#include <iostream>
 
 int main()
 {
-    std::cout << "LOADING WAYPOINTS... (1/2)\n";
-    std::vector<Waypoint> waypoints = Load_data::load_waypoints("data/map/navaids.csv");
-    std::cout << "LOADING AIRPORTS... (2/2)\n";
-    std::vector<Airport> airports = Load_data::load_airports("data/map/airports.csv");
-    std::cout << "loaded succesfully!\n";
+    int CRS = 90;
+    int TAS = 120;
+    Wind wind;
+    wind.speed = 15;
+    wind.angle = 180;
+    int variation = 10;
+    int WCA = Course_calculation::calculate_wind_correction_angle(wind, CRS, TAS);
+    std::cout << "WCA is equal to: " << WCA << '\n';
 
     return 0;
 }

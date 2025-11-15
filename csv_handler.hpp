@@ -12,20 +12,20 @@ struct Waypoint
     std::string ident;
     std::string name;
     std::string type;
-    std::string frequency_khz;
-    std::string frequency_khz_DME;
+    std::string Frequency_khz;
+    std::string Frequency_khz_DME;
     std::string country;
-    float longitude;
-    float latitude;
-    float magnetic_variation;
+    double longitude;
+    double latitude;
+    double magnetic_variation;
 };
 
-struct frequency
+struct Frequency
 {
     std::string ident;
     std::string type;
     std::string description;
-    int frequency_mhz;
+    int Frequency_mhz;
 };
 
 
@@ -38,10 +38,10 @@ struct Airport
     std::string name; // name of an airport (Warsaw Chopin Airport)
     std::string country;
     std::string municipality; 
-    float latitude;
-    float longitude;
+    double latitude;
+    double longitude;
     int elevation;
-    std::map<std::string, frequency> frequencies; // key = type 
+    std::map<std::string, Frequency> frequencies; // key = type 
 };
 
 class Load_data
@@ -81,19 +81,39 @@ private:
         result.push_back(cell);
         return result;
     }
-    static float safe_stof(const std::string& s, float default_value = 0.0f) {
+    static double safe_stod(const std::string& s, double default_value = 0.0f) {
     if (s.empty()) return default_value;
     try {
-        return std::stof(s);
+        return std::stod(s);
     } catch (...) {
         return default_value;
     }
 }
 public:
-    // static std::map<std::string,std::string> load_airport_frequencies() {}
-    static std::vector<Airport> load_airports(std::string filename)
+    static std::map<std::string,Frequency> load_airport_frequencies(std::string filename) 
     {
-        std::vector<Airport> airports;
+        std::map<std::string, Frequency> frequencies;
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Error opening file: " << filename << "\n";
+            return frequencies;
+        }
+
+        std::string airport_ident;
+        std::map<std::string, Frequency> freq; // ident / Frequency
+        std::string line;
+        std::getline(file, line);
+
+        while (std::getline(file, line)) {
+            auto row = parse_csv_line(line);
+            
+
+
+        }
+    }
+    static std::map<std::string, Airport> load_airports(std::string filename)
+    {
+        std::map<std::string,Airport> airports;
         std::ifstream file(filename);
         if (!file.is_open()) {
             std::cerr << "Error opening file: " << filename << "\n";
@@ -111,8 +131,8 @@ public:
             a.ident = row[1];
             a.type = row[2];
             a.name = row[3];
-            a.latitude = stof(row[4]);
-            a.longitude = stof(row[5]);
+            a.latitude = stod(row[4]);
+            a.longitude = stod(row[5]);
             if (!row[6].empty()) 
             {
                 a.elevation = std::stoi(row[6]);
@@ -122,15 +142,15 @@ public:
             a.icao = row[12];
             a.iata = row[13];
 
-            airports.push_back(a);
+            airports[a.ident] = a;
             
         }
 
         return airports;
     }
-    static std::vector<Waypoint> load_waypoints(std::string filename)
+    static std::map<std::string, Waypoint> load_waypoints(std::string filename)
     {
-        std::vector<Waypoint> waypoints;
+        std::map<std::string,Waypoint> waypoints;
         std::ifstream file(filename);
         if (!file.is_open()) {
             std::cerr << "Error opening file: " << filename << "\n";
@@ -146,13 +166,14 @@ public:
             w.ident = row[2];
             w.name = row[3];
             w.type = row[4];
-            w.frequency_khz = row[5];
-            w.latitude = safe_stof(row[6]);
-            w.longitude = safe_stof(row[7]);
+            w.Frequency_khz = row[5];
+            w.latitude = safe_stod(row[6]);
+            w.longitude = safe_stod(row[7]);
             w.country = row[9];
-            w.frequency_khz_DME = row[10];
-            w.magnetic_variation = safe_stof(row[16]);
+            w.Frequency_khz_DME = row[10];
+            w.magnetic_variation = safe_stod(row[16]);
 
+            waypoints[w.ident] = w;
             
         }
         return waypoints;
