@@ -5,6 +5,11 @@
 // R = 6371.0 km 
 #define R 3440.0 // NM
 
+#define UNIVERSAL_GAS_CONSTANT 8.3144598 
+#define MOLAR_MASS_OF_AIR 0.0289644 
+#define GRAVITY 9.80665  
+#define TEMP_LAPSE_RATE 0.0065 
+
 struct Wind
 {
     int angle;
@@ -18,26 +23,22 @@ T rounded(K value, int precision) // how many nums after comma
     return std::round(prec * static_cast<T>(value)) / prec;
 }
 
-class Convertion
-{
-public:
 
-};
-
-class Course_and_distance_calculation
-{
-private:
-    static double deg_to_rad(double num)
+double deg_to_rad(double num)
     {
 
         return num * M_PI / 180.0;
 
         
     }
-    static double rad_to_deg(double num)
+double rad_to_deg(double num)
     {
         return num * 180.0 / M_PI;
     }
+
+class Course_and_distance_calculation
+{
+
 public:
     static int calculate_true_heading(int HDG, double variation, int precision)
     {
@@ -57,6 +58,7 @@ public:
         
         return std::round(rad_to_deg(asine));
     }
+
     static int calculate_course(double lat1, double lon1, double lat2, double lon2) 
     {
         // θ=atan2(sinΔλ⋅cosφ2​,cosφ1​⋅sinφ2​−sinφ1​⋅cosφ2​⋅cosΔλ)
@@ -82,6 +84,7 @@ public:
 
         return static_cast<int>(std::round(deg_theta));
     }
+
     static double calculate_distance(double lat1, double lon1, double lat2, double lon2)
     {
         // delta_phi   = radians(lat2 - lat1)
@@ -107,6 +110,27 @@ public:
         
 
         return R * c;
+    }
+};
+
+double calculate_pressure(double press_at_MSL, double temp_at_MSL, int altitude)
+{
+    // P = Pmsl(1 - (L*h)/Tmsl) ** ((g*M)/(L*R))
+    double temp_K = 273.15 + temp_at_MSL;
+    double altitude_m = 0.3048 * altitude;
+    double power = (GRAVITY * MOLAR_MASS_OF_AIR) / (UNIVERSAL_GAS_CONSTANT * TEMP_LAPSE_RATE);
+    double a = 1 - (TEMP_LAPSE_RATE * altitude_m)/temp_K;
+    double P = std::pow(press_at_MSL * a, power);
+    return rounded<double, double>(P,2);
+
+}
+
+class Speed_calculation
+{
+public:
+    static int calculate_true_airspeed()
+    {
+
     }
 };
 

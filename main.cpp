@@ -11,6 +11,9 @@ int main()
     wind.speed = 15;
     wind.angle = 180;
     int variation = 10;
+    int altitude = 10000;
+    int press_at_MSL = 101325;
+    int temp_at_MSL = 15;
     int WCA = Course_and_distance_calculation::calculate_wind_correction_angle(wind, CRS, TAS);
     std::cout << "WCA is equal to: " << WCA << '\n';
 
