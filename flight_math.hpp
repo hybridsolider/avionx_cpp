@@ -2,6 +2,9 @@
 #ifndef FLIGHT_MATH
 #define FLIGHT_MATH
 
+// R = 6371.0 km 
+#define R 3440.0 // NM
+
 struct Wind
 {
     int angle;
@@ -21,7 +24,7 @@ public:
 
 };
 
-class Course_calculation
+class Course_and_distance_calculation
 {
 private:
     static double deg_to_rad(double num)
@@ -79,6 +82,34 @@ public:
 
         return static_cast<int>(std::round(deg_theta));
     }
+    static double calculate_distance(double lat1, double lon1, double lat2, double lon2)
+    {
+        // delta_phi   = radians(lat2 - lat1)
+        // delta_lambda= radians(lon2 - lon1)
+        // phi1        = radians(lat1)
+        // phi2        = radians(lat2)
+        // a           = sin(delta_phi/2)^2 + cos(phi1) * cos(phi2) * sin(delta_lambda/2)^2
+        // c           = 2 * atan2(sqrt(a), sqrt(1-a))
+        // distance    = R * c
+
+        double lambda1 = deg_to_rad(lon1);
+        double lambda2 = deg_to_rad(lon2);
+        double delta_lambda = lambda2 - lambda1;
+
+        double phi1 = deg_to_rad(lat1);
+        double phi2 = deg_to_rad(lat2);
+        double delta_phi = phi2 - phi1;
+
+        double a = std::pow(std::sin(delta_phi/2),2) + std::cos(phi1) * std::cos(phi2) * std::pow(std::sin(delta_lambda/2),2);
+        
+        double c = 2 * std::atan2(std::sqrt(a), std::sqrt(1-a));
+
+        
+
+        return R * c;
+    }
 };
+
+
 
 #endif

@@ -11,7 +11,7 @@ int main()
     wind.speed = 15;
     wind.angle = 180;
     int variation = 10;
-    int WCA = Course_calculation::calculate_wind_correction_angle(wind, CRS, TAS);
+    int WCA = Course_and_distance_calculation::calculate_wind_correction_angle(wind, CRS, TAS);
     std::cout << "WCA is equal to: " << WCA << '\n';
 
 
@@ -20,8 +20,8 @@ int main()
     Airport EPWA = airports["EPWA"];
     Airport EPLL = airports["EPLL"];
 
-    std::cout << "Course: " << Course_calculation::calculate_course(EPWA.latitude, EPWA.longitude, EPLL.latitude, EPLL.longitude) << "\n";
-
+    std::cout << "Course: " << Course_and_distance_calculation::calculate_course(EPWA.latitude, EPWA.longitude, EPLL.latitude, EPLL.longitude) << "\n";
+    std::cout << "Distance [nm]: " << Course_and_distance_calculation::calculate_distance(EPWA.latitude, EPWA.longitude, EPLL.latitude, EPLL.longitude) << "\n";
 
     return 0;
 }
