@@ -1,5 +1,7 @@
 #include "flight_math.hpp"
+#include "csv_handler.hpp"
 #include <iostream>
+#include <map>
 
 int main()
 {
@@ -11,6 +13,15 @@ int main()
     int variation = 10;
     int WCA = Course_calculation::calculate_wind_correction_angle(wind, CRS, TAS);
     std::cout << "WCA is equal to: " << WCA << '\n';
+
+
+    std::map<std::string,Airport> airports = Load_data::load_airports("data/map/airports.csv");
+
+    Airport EPWA = airports["EPWA"];
+    Airport EPLL = airports["EPLL"];
+
+    std::cout << "Course: " << Course_calculation::calculate_course(EPWA.latitude, EPWA.longitude, EPLL.latitude, EPLL.longitude) << "\n";
+
 
     return 0;
 }
