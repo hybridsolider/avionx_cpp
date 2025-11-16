@@ -1,7 +1,15 @@
 #include <cmath>
+#include <string>
 #ifndef FLIGHT_MATH
 #define FLIGHT_MATH
 
+
+
+//========================================
+//
+//            CONST VALUES
+//
+//========================================
 // R = 6371.0 km 
 #define R 3440.0 // NM
 
@@ -16,6 +24,26 @@ struct Wind
     int speed;
 };
 
+struct Time
+{
+    int hour;
+    int minutes;
+    int seconds;
+};
+
+struct Data
+{
+    int year;
+    int month;
+    int day;
+    Time time;
+};
+
+//========================================
+//
+//          PRECISION ROUNDING
+//
+//========================================
 template <typename K, typename T> 
 T rounded(K value, int precision) // how many nums after comma
 {
@@ -23,19 +51,36 @@ T rounded(K value, int precision) // how many nums after comma
     return std::round(prec * static_cast<T>(value)) / prec;
 }
 
-
+//========================================
+//
+//            CONVERTIONS
+//
+//========================================
 double deg_to_rad(double num)
-    {
+{
 
-        return num * M_PI / 180.0;
+    return num * M_PI / 180.0;
 
         
-    }
+}
 double rad_to_deg(double num)
-    {
-        return num * 180.0 / M_PI;
-    }
+{
+    return num * 180.0 / M_PI;
+}
+double celcius_to_kelvin(int temperature)
+{
+    return temperature + 273.15;
+}
+double kelvin_to_celcius(int temperature)
+{
+    return temperature - 273.15;
+}
 
+//========================================
+//
+//            CALCUlATIONS
+//
+//========================================
 class Course_and_distance_calculation
 {
 
@@ -120,17 +165,72 @@ double calculate_pressure(double press_at_MSL, double temp_at_MSL, int altitude)
     double altitude_m = 0.3048 * altitude;
     double power = (GRAVITY * MOLAR_MASS_OF_AIR) / (UNIVERSAL_GAS_CONSTANT * TEMP_LAPSE_RATE);
     double a = 1 - (TEMP_LAPSE_RATE * altitude_m)/temp_K;
-    double P = std::pow(press_at_MSL * a, power);
+    double P = press_at_MSL * std::pow(a, power);
     return rounded<double, double>(P,2);
 
+}
+
+double calculate_temperature(int temperature, int altitude, int elevation)
+{
+    return temperature - 2 * ((altitude - elevation) / 1000.0); // .0 makes it double instead of int
 }
 
 class Speed_calculation
 {
 public:
-    static int calculate_true_airspeed()
+    static int calculate_true_airspeed(int IAS, int temp, int altitude, int elevation)
     {
+        double temp_K = celcius_to_kelvin(static_cast<double>(temp));
+        double temp_K_ISA = celcius_to_kelvin(calculate_temperature(temp,altitude,elevation));
+        return static_cast<int>(IAS * std::sqrt(temp_K/temp_K_ISA) + 0.5); // + 0.5 because static_cast always rounds it down (1.9 -> 1) so by adding 0.5 (1.4 + 0.5 -> 1.9 -> 1) but (1.6 + 0.5 -> 2.1 -> 2)
+    }
+    static int calculate_ground_speed(int TAS, int CRS, Wind& wind)
+    {
+        int delta_angle =  (wind.angle - CRS + 360) % 360; // if wind = 0 and CRS = 90, difference is equal to -90. if we add 360 we got 270. 270 % 360 = 270. No negative course.
+        int ground_speed = static_cast<int>(TAS + wind.speed * std::cos(deg_to_rad(delta_angle)) + 0.5);
+        return ground_speed;
+    }
+};
 
+class Time_calculation
+{
+public:
+    static Time format_time(double hour=0, double minutes=0, double seconds=0)
+    {
+        Time time;
+        time.hour = static_cast<int>(hour);
+        time.minutes =  static_cast<int>(minutes);
+        time.seconds =  static_cast<int>(seconds);
+
+        if (hour - time.hour != 0) // ex. 2.1234h: 2.1234h - 2.0h = 0.1234h
+        {
+            minutes += 60 * (hour - time.hour); // 2.1234h - 2.0h = 0.1234h | 0.1234h * 60 = 7.404m
+            time.minutes = static_cast<int>(minutes); // 7.404m => (int) 7m
+        }
+        if (minutes - time.minutes != 0) // 7.404m - 7m = 0.404m
+        {
+            seconds += 60 * (minutes - time.minutes); // 7.404m - 7m = 0.404 m| 0.404m * 60 = 24.24s
+            time.seconds = static_cast<int>(seconds + 0.5); // 24s
+        }
+        return time;
+    }
+    static std::string display_time(Time& time, char splitter=':')
+    {
+        std::string form_time;
+        if (time.hour < 10) form_time += "0";
+        form_time += std::to_string(time.hour);
+        form_time += splitter;
+        if (time.minutes < 10) form_time += "0";
+        form_time += std::to_string(time.minutes);
+        form_time += splitter;
+        if (time.seconds < 10) form_time += "0";
+        form_time += std::to_string(time.seconds);
+
+        return form_time;
+    }
+    static double calculate_ETE(double distance, int ground_speed)
+    {
+        return distance / static_cast<double>(ground_speed);
     }
 };
 
