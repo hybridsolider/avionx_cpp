@@ -90,7 +90,7 @@ double kilos_to_pounds(double kilos)
 //            CALCUlATIONS
 //
 //========================================
-class Course_and_distance_calculation
+class Course_and_distance_calculations
 {
 
 public:
@@ -184,7 +184,7 @@ double calculate_temperature(int temperature, int altitude, int elevation)
     return temperature - 2 * ((altitude - elevation) / 1000.0); // .0 makes it double instead of int
 }
 
-class Speed_calculation
+class Speed_calculations
 {
 public:
     static int calculate_true_airspeed(int IAS, int temp, int altitude, int elevation)
@@ -201,7 +201,7 @@ public:
     }
 };
 
-class Time_calculation
+class Time_calculations
 {
 public:
 
@@ -244,7 +244,7 @@ public:
     }
 };
 
-class Fuel_calculation
+class Fuel_calculations
 {
 public:
     static double fuel_needed(double fuel_burning_rate, double time)
@@ -257,6 +257,7 @@ public:
     } 
 };
 
+class Automatizations
 
 
 #endif
