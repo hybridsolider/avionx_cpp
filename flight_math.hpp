@@ -76,6 +76,15 @@ double kelvin_to_celcius(int temperature)
     return temperature - 273.15;
 }
 
+double pounds_to_kilos(double pounds)
+{
+    return rounded<double,double>(pounds * 0.45359237, 3);
+}
+double kilos_to_pounds(double kilos)
+{
+    return rounded<double,double>(kilos / 0.45359237, 3);
+}
+
 //========================================
 //
 //            CALCUlATIONS
@@ -195,6 +204,7 @@ public:
 class Time_calculation
 {
 public:
+
     static Time format_time(double hour=0, double minutes=0, double seconds=0)
     {
         Time time;
@@ -232,6 +242,19 @@ public:
     {
         return distance / static_cast<double>(ground_speed);
     }
+};
+
+class Fuel_calculation
+{
+public:
+    static double fuel_needed(double fuel_burning_rate, double time)
+    {
+        return fuel_burning_rate * time;
+    }
+    static double fuel_weight(double density, double volume)
+    {
+        return pounds_to_kilos(density * volume);
+    } 
 };
 
 
