@@ -1,5 +1,7 @@
 #include <cmath>
 #include <string>
+#include <vector>
+#include "csv_handler.hpp"
 #ifndef FLIGHT_MATH
 #define FLIGHT_MATH
 
@@ -258,6 +260,13 @@ public:
 };
 
 class Automatizations
+{
+public:
+    // std::vector<Waypoint> find_the_shortest_path(std::map<std::string, Waypoint>& waypoints, Airport& origin, Airport& destination)
+    // {
+    //     return;
+    // }
+};
 
 
 #endif

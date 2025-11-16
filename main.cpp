@@ -1,5 +1,6 @@
 #include "flight_math.hpp"
 #include "csv_handler.hpp"
+#include "handle_python.hpp"
 #include <iostream>
 #include <map>
 
@@ -42,6 +43,8 @@ int main()
     double ETE = Time_calculations::calculate_ETE(Course_and_distance_calculations::calculate_distance(EPWA.latitude, EPWA.longitude, EPLL.latitude, EPLL.longitude),GS);
     Time time = Time_calculations::format_time(ETE);
     std::cout << "ETE: " << Time_calculations::display_time(time) << "\n";
+
+    std::cout << "Declination of EPWA: " << get_declination(EPWA.latitude, EPWA.longitude);
     
     return 0;
 }

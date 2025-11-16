@@ -183,6 +183,40 @@ public:
         }
         return waypoints;
     }
+    static std::map<std::string, Waypoint> load_waypointsz(std::string filename)
+    {
+        std::map<std::string,Waypoint> waypoints;
+        std::ifstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Error opening file: " << filename << "\n";
+            return waypoints;
+        }      
+        std::string line;
+        std::getline(file, line);
+
+        while (std::getline(file, line)) {
+            auto row = parse_csv_line(line);
+            Waypoint w;
+
+            w.ident = row[2];
+            w.name = row[3];
+            w.type = row[4];
+            w.Frequency_khz = row[5];
+            w.latitude = safe_stod(row[6]);
+            w.longitude = safe_stod(row[7]);
+            if (!row[8].empty()) 
+            {
+                w.elevation = std::stoi(row[8]);
+            } else {w.elevation = 0;}
+            w.country = row[9];
+            w.Frequency_khz_DME = row[10];
+            w.magnetic_variation = safe_stod(row[16]);
+
+            waypoints[w.ident] = w;
+            
+        }
+        return waypoints;
+    }
     
 };
 
@@ -190,3 +224,6 @@ public:
 
 #endif
 
+
+
+// fixes: https://github.com/FayyazAK/Global-Aviation-Waypoints/tree/main
