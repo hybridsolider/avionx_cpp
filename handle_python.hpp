@@ -9,9 +9,10 @@
 #ifndef HANDLE_PYTHON
 #define HANDLE_PYTHON
 #define PYTHON_PATH "./venv/bin/python"
-#define PYTHON_FILENAME "main.py"
+#define PYTHON_FILENAME "python/main.py"
 #include <memory>
 #include <string>
+#include <map>
 
 std::string call_python(const std::string function, const std::string arguments)
 {
@@ -36,5 +37,7 @@ double get_declination(double latitude, double longitude)
     return 0.0;
 }
 
+// add string to dict and string to list
+// open meteo api function 
 
 #endif 

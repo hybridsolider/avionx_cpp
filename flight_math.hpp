@@ -1,6 +1,8 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <map>
 #include "csv_handler.hpp"
 #ifndef FLIGHT_MATH
 #define FLIGHT_MATH
@@ -41,6 +43,15 @@ struct Data
     Time time;
 };
 
+struct Leaf
+{
+    double latitude; // or y-axis
+    double longitude; // or x-axis
+    std::string ident;
+    Leaf* leaf_neg;
+    Leaf* leaf_pos;
+};
+
 //========================================
 //
 //          PRECISION ROUNDING
@@ -69,11 +80,11 @@ double rad_to_deg(double num)
 {
     return num * 180.0 / M_PI;
 }
-double celcius_to_kelvin(int temperature)
+double celcius_to_kelvin(double temperature)
 {
     return temperature + 273.15;
 }
-double kelvin_to_celcius(int temperature)
+double kelvin_to_celcius(double temperature)
 {
     return temperature - 273.15;
 }
@@ -92,6 +103,22 @@ double kilos_to_pounds(double kilos)
 //            CALCUlATIONS
 //
 //========================================
+
+
+double median(std::vector<double> list)
+{
+    std::sort(list.begin(), list.end());
+    int len = list.size();
+
+    // Check if the number of elements is odd
+    if (len % 2 != 0)
+        return (double)list[len / 2];
+
+    // If the number of elements is even, return the average
+    // of the two middle elements
+    return (double)(list[(len - 1) / 2] + list[len / 2]) / 2.0;
+}
+
 class Course_and_distance_calculations
 {
 
@@ -167,6 +194,43 @@ public:
 
         return R * c;
     }
+
+    static double calculate_short_distance(double lat1, double lon1, double lat2, double lon2) // works fine with smaller numbers
+    {
+        return std::sqrt(std::pow(lat1 - lat2, 2) + std::pow(lon1 - lon2,2));
+    }
+
+    template <typename T, typename distance_func>
+    static T nearest_waypoint(std::vector<T>& waypoints, double latitude, double longitude, distance_func distance_function)
+    {
+        T first_val = waypoints[0];
+        double min_distance = distance_function(first_val.latitude, first_val.longitude, latitude, longitude);
+        for (size_t i = 0; i < waypoints.size(); i++)
+        {
+            double distance = distance_function(waypoints[i].latitude, waypoints[i].longitude, latitude, longitude);
+            if(distance < min_distance)
+            {
+                min_distance = distance;
+                first_val = waypoints[i];
+            }
+        }
+        return first_val;
+
+    }
+
+    // template <typename T>
+    // static std::vector<std::string> nearest_waypoints(std::map<std::string, T>& waypoints, double latitude, double longitude, double max_distance)
+    // {  
+    //     std::vector<std::string> out;
+    //     for (auto const& [key, val] : waypoints)
+    //     {
+    //         if(distance_function(val.latitude, val.longitude, latitude, longitude) <= max_distance)
+    //         {
+    //             out.push_back(val.ident);
+    //         }
+    //     }
+    //     return out;
+    // } should be vector instead of map
 };
 
 double calculate_pressure(double press_at_MSL, double temp_at_MSL, int altitude)
@@ -259,13 +323,115 @@ public:
     } 
 };
 
-class Automatizations
+
+class KN_tree
 {
 public:
-    // std::vector<Waypoint> find_the_shortest_path(std::map<std::string, Waypoint>& waypoints, Airport& origin, Airport& destination)
-    // {
-    //     return;
-    // }
+    template <typename T>
+    static void to_leafs(const std::map<std::string, T>& waypoints, std::vector<Leaf>& leafs)
+    {
+        // makes waypoint list lighter and makes it vector
+        Leaf leaf;
+        leafs.reserve(waypoints.size());
+        for (auto const& [key, val] : waypoints)
+        {
+            leafs.push_back
+            (
+                Leaf
+                {
+                    val.latitude,
+                    val.longitude,
+                    val.ident,
+                    nullptr,
+                    nullptr
+                }
+            );
+        }
+
+    }
+
+    static void map_coordinates(std::vector<Leaf>& waypoints, std::vector<Leaf>& out, Leaf& center)
+    {
+        // maps Leafs. changes latitude to y and longitude to x
+        out.clear();
+        out.reserve(waypoints.size());
+
+        double center_lat_rad = deg_to_rad(center.latitude);
+        double center_lon_rad = deg_to_rad(center.longitude);
+        double cos_center_lat = std::cos(center_lat_rad);
+        for (size_t i = 0; i < waypoints.size(); i++)
+        {
+            double lat_rad = deg_to_rad(waypoints[i].latitude);
+            double lon_rad = deg_to_rad(waypoints[i].longitude);
+            out.emplace_back(
+                Leaf
+                {
+                    R * (lat_rad - center_lat_rad),
+                    R * (lon_rad - center_lon_rad) * cos_center_lat,
+                    waypoints[i].ident,
+                    nullptr,
+                    nullptr
+                }
+            );
+        }
+    }
+
+    static void change_center(std::vector<Leaf>& waypoints, std::vector<Leaf>& out, Leaf& center)
+    {
+        // allows for changing center of map (0,0) coordinates
+        out.clear();
+        out.reserve(waypoints.size());
+        for (size_t i = 0; i < waypoints.size(); i++)
+        {
+            out.emplace_back
+            (
+                Leaf
+                {
+                    waypoints[i].latitude - center.latitude,
+                    waypoints[i].longitude - center.longitude,
+                    waypoints[i].ident,
+                    nullptr, 
+                    nullptr
+                }
+            );
+        }
+    }
+    
+
+    static Leaf find_center(const std::vector<Leaf>& waypoints)
+    {
+        double x_sum = 0;
+        double y_sum = 0;
+        double z_sum = 0;
+
+        for (auto& wp : waypoints)
+        {
+            double lat_rad = wp.latitude * M_PI / 180.0;
+            double lon_rad = wp.longitude * M_PI / 180.0;
+
+            x_sum += cos(lat_rad) * cos(lon_rad);
+            y_sum += cos(lat_rad) * sin(lon_rad);
+            z_sum += sin(lat_rad);
+        }
+
+        double count = static_cast<double>(waypoints.size());
+        double x_avg = x_sum / count;
+        double y_avg = y_sum / count;
+        double z_avg = z_sum / count;
+
+        double lon = atan2(y_avg, x_avg) * 180.0 / M_PI;
+        double hyp = sqrt(x_avg * x_avg + y_avg * y_avg);
+        double lat = atan2(z_avg, hyp) * 180.0 / M_PI;
+
+        return Leaf{
+            lat,
+            lon,
+            "geographic_center",
+            nullptr,
+            nullptr
+        };
+    }
+
 };
 
 

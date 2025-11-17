@@ -183,7 +183,7 @@ public:
         }
         return waypoints;
     }
-    static std::map<std::string, Waypoint> load_waypointsz(std::string filename)
+    static std::map<std::string, Waypoint> load_fixes(std::string filename)
     {
         std::map<std::string,Waypoint> waypoints;
         std::ifstream file(filename);
@@ -199,18 +199,12 @@ public:
             Waypoint w;
 
             w.ident = row[2];
-            w.name = row[3];
-            w.type = row[4];
-            w.Frequency_khz = row[5];
-            w.latitude = safe_stod(row[6]);
-            w.longitude = safe_stod(row[7]);
-            if (!row[8].empty()) 
-            {
-                w.elevation = std::stoi(row[8]);
-            } else {w.elevation = 0;}
-            w.country = row[9];
-            w.Frequency_khz_DME = row[10];
-            w.magnetic_variation = safe_stod(row[16]);
+            w.name = row[2];
+            w.type = "fix";
+            w.latitude = safe_stod(row[3]);
+            w.longitude = safe_stod(row[4]);
+            w.elevation = 0;
+            w.country = row[1];
 
             waypoints[w.ident] = w;
             

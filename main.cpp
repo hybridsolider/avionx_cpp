@@ -30,6 +30,9 @@ int main()
 
 
     std::map<std::string,Airport> airports = Load_data::load_airports("data/map/airports.csv");
+    std::map<std::string,Waypoint> waypoints = Load_data::load_waypoints("data/map/navaids.csv");
+    std::map<std::string,Waypoint> fixes = Load_data::load_fixes("data/map/fixes.csv");
+    waypoints.insert(fixes.begin(), fixes.end());
 
     Airport EPWA = airports["EPWA"];
     Airport EPLL = airports["EPLL"];
@@ -44,7 +47,37 @@ int main()
     Time time = Time_calculations::format_time(ETE);
     std::cout << "ETE: " << Time_calculations::display_time(time) << "\n";
 
-    std::cout << "Declination of EPWA: " << get_declination(EPWA.latitude, EPWA.longitude);
+    std::cout << "Declination of EPWA: " << get_declination(EPWA.latitude, EPWA.longitude) << "\n";
+
+    std::cout << "KDTREE:\n";
+    std::vector<Leaf> leafs;
+    KN_tree::to_leafs(waypoints, leafs);
+    for (Leaf l : leafs)
+    {
+        std::cout << "\nident: " << l.ident << "\nlatitude: " << l.latitude << "\nlongitude: " << l.longitude;
+    }
+    std::cout << "\nTransformed wp to leafes (1/\n";
+    Leaf center = KN_tree::find_center(leafs);
+    Leaf near_center = Course_and_distance_calculations::nearest_waypoint<Leaf>
+    (
+        leafs,
+        center.latitude,
+        center.longitude, 
+        Course_and_distance_calculations::calculate_short_distance
+    );
+    std::cout << "center is:\nlat: " << center.latitude << "\nlon: " << center.longitude;
+    std::cout << "near center wpt is:\nlat: " << near_center.latitude << "\nlon: " << near_center.longitude << "\nident: " << near_center.ident;
+    std::cout << "\nFound center and nearest waypoint from it! (2/\n";
+    std::vector<Leaf> leafs_as_math;
+    KN_tree::map_coordinates(leafs,leafs_as_math,near_center);
+    for (Leaf l : leafs_as_math)
+    {
+        std::cout << "\nident: " << l.ident << "\nlatitude: " << l.latitude << "\nlongitude: " << l.longitude;
+    }
+
+    std::cout << "\nTransformed math coordinates from geographical (3/\n";    
+
+
     
     return 0;
 }
